@@ -1,0 +1,97 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "aciName": {
+      "type": "string"
+    },
+    "aciImage": {
+      "type": "string",
+      "defaultValue": "mcr.microsoft.com/azuredocs/aci-hellofiles"
+    }
+  },
+  "variables": {
+    "aciStorageName": "acifilestor",
+    "aciFileShareName": "acifileshare",
+    "aciFileShareUri": "[concat(variables('aciStorageName'), '/default/', variables('aciFileShareName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('aciStorageName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "resources": [
+        {
+          "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+          "apiVersion": "2019-06-01",
+          "name": "[variables('aciFileShareUri')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('aciStorageName'))]"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "[parameters('aciName')]",
+      "type": "Microsoft.ContainerInstance/containerGroups",
+      "apiVersion": "2019-12-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('aciStorageName'))]"
+      ],
+      "properties": {
+        "containers": [
+          {
+            "name": "[parameters('aciName')]",
+            "properties": {
+              "image": "[parameters('aciImage')]",
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGb": 1.5
+                }
+              },
+              "ports": [
+                {
+                  "port": 80
+                }
+              ],
+              "volumeMounts": [
+                {
+                  "name": "acivolume",
+                  "mountPath": "/aci/logs"
+                }
+              ]
+            }
+          }
+        ],
+        "osType": "Linux",
+        "ipAddress": {
+          "type": "Public",
+          "ports": [
+            {
+              "protocol": "tcp",
+              "port": 80
+            }
+          ],
+          "dnsNameLabel": "[parameters('aciName')]"
+        },
+        "volumes": [
+          {
+            "name": "acivolume",
+            "azureFile": {
+              "shareName": "[variables('aciFileShareName')]",
+              "storageAccountName": "[variables('aciStorageName')]",
+              "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('aciStorageName')), '2019-04-01').keys[0].value]"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
