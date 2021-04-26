@@ -21,17 +21,20 @@
     "aciFileShareName": {
       "type": "string",
       "defaultValue": "acifileshare"
+    },
+    "aciStorageName": {
+      "type": "string",
+      "defaultValue": "acifilestor"
     }
   },
   "variables": {
-    "aciStorageName": "acifilestor",
-    "aciFileShareUri": "[concat(variables('aciStorageName'), '/default/', parameters('aciFileShareName'))]"
+    "aciFileShareUri": "[concat(parameters('aciStorageName'), '/default/', parameters('aciFileShareName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2019-06-01",
-      "name": "[variables('aciStorageName')]",
+      "name": "[parameters('aciStorageName')]",
       "location": "[resourceGroup().location]",
       "sku": {
         "name": "Standard_LRS"
@@ -43,7 +46,7 @@
           "apiVersion": "2019-06-01",
           "name": "[variables('aciFileShareUri')]",
           "dependsOn": [
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('aciStorageName'))]"
+            "[resourceId('Microsoft.Storage/storageAccounts', parameters('aciStorageName'))]"
           ]
         }
       ]
@@ -54,7 +57,7 @@
       "apiVersion": "2019-12-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('aciStorageName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('aciStorageName'))]"
       ],
       "properties": {
         "containers": [
@@ -105,8 +108,8 @@
             "name": "acivolume",
             "azureFile": {
               "shareName": "[parameters('aciFileShareName')]",
-              "storageAccountName": "[variables('aciStorageName')]",
-              "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('aciStorageName')), '2019-04-01').keys[0].value]"
+              "storageAccountName": "[parameters('aciStorageName')]",
+              "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('aciStorageName')), '2019-04-01').keys[0].value]"
             }
           }
         ]
