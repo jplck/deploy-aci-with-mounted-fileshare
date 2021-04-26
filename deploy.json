@@ -8,12 +8,24 @@
     "aciImage": {
       "type": "string",
       "defaultValue": "mcr.microsoft.com/azuredocs/aci-hellofiles"
+    },
+    "acrUri": {
+      "type": "string"
+    },
+    "acrUsername": {
+      "type": "string"
+    },
+    "acrPwd": {
+      "type": "string"
+    },
+    "aciFileShareName": {
+      "type": "string",
+      "defaultValue": "acifileshare"
     }
   },
   "variables": {
     "aciStorageName": "acifilestor",
-    "aciFileShareName": "acifileshare",
-    "aciFileShareUri": "[concat(variables('aciStorageName'), '/default/', variables('aciFileShareName'))]"
+    "aciFileShareUri": "[concat(variables('aciStorageName'), '/default/', parameters('aciFileShareName'))]"
   },
   "resources": [
     {
@@ -70,6 +82,13 @@
             }
           }
         ],
+        "imageRegistryCredentials": [
+          {
+            "server": "[parameters('acrUri')]",
+            "username": "[parameters('acrUsername')]",
+            "password": "[parameters('acrPwd')]"
+          }
+        ],
         "osType": "Linux",
         "ipAddress": {
           "type": "Public",
@@ -85,7 +104,7 @@
           {
             "name": "acivolume",
             "azureFile": {
-              "shareName": "[variables('aciFileShareName')]",
+              "shareName": "[parameters('aciFileShareName')]",
               "storageAccountName": "[variables('aciStorageName')]",
               "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('aciStorageName')), '2019-04-01').keys[0].value]"
             }
